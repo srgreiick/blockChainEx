@@ -7,16 +7,28 @@ class Block{
         this.data = data;
         this.previousHash = previousHash;
         this.hash = this.calculateHash();
+        this.nonce = 0;
     }
 
     calculateHash(){
-        return SHA256(this.index + this.previousHash + this.timeStamp + JSON.stringify(this.data)).toString();
+        return SHA256(this.index + this.previousHash + this.timeStamp + JSON.stringify(this.data)+this.nonce).toString();
+    }
+
+    mineBlock(difficulty){
+      while(this.hash.substring(0, difficulty)!== Array(difficulty+1).join("0")){
+        this.nonce++;
+        this.hash = this.calculateHash();
+      }
+
+      console.log("Block mined: "+this.hash);
     }
 }
+
 
 class BlockChain{
     constructor(){
         this.chain = [this.createGenesisBlock()];
+        this.difficulty = 4;
     }
 
     createGenesisBlock(){
@@ -29,7 +41,7 @@ class BlockChain{
 
     addBlock(newBlock){
         newBlock.previousHash = this.getLatestBlock().hash;
-        newBlock.hash = newBlock.calculateHash();
+        newBlock.mineBlock(this.difficulty)
         this.chain.push(newBlock);
     }
 
@@ -53,13 +65,9 @@ class BlockChain{
 
 
 let toxyCoin = new BlockChain();
+
+console.log("Mining Block 1...");
 toxyCoin.addBlock(new Block(1, "05/03/2021", {ammount: 4}))
+
+console.log("Mining Block 1...");
 toxyCoin.addBlock(new Block(2, "06/03/2021", {ammount: 50}))
-
-//console.log(JSON.stringify(toxyCoin, null, 4));
-console.log("Valid? "+toxyCoin.isChainValid());
-
-toxyCoin.chain[1].data = {ammount:300}
-toxyCoin.chain[1].calculateHash()
-
-console.log("Valid? "+toxyCoin.isChainValid());
