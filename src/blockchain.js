@@ -12,12 +12,18 @@ class Transaction{
   }
 
   signTransaction(signingKey){
-    
+    if (signingKey.getPublic('hex') !== this.fromAddress) {
+      throw new Error("You can't sign transactions for other wallets!")
+    }
 
     const hashTX = this.calculateHash();
     const sig = signingKey.sign(hashTx, 'base64');
     this.signature = sig.toDER('hex');
 
+  }
+
+  isValid(){
+    if (this.fromAddress === null) return true;
   }
 }
 
