@@ -1,26 +1,25 @@
-const {BlockChain, Transaction} = require("./blockchain");
+const {BlockChain, Transaction} = require('./blockchain');
+const EC = require('elliptic').ec;
+const ec = new EC('secp256k1');
+
+
+const myKey = ec.keyFromPrivate('f97a4648626ac5c5e5a36d7ef8b93cf710dbcbe7e1c3c5ae6da3480817a14e80');
+const myWalletAddress = myKey.getPublic('hex');
 
 let toxyCoin = new BlockChain();
 
-toxyCoin.createTransaction(new Transaction('addr1', 'addr2', 100));
-toxyCoin.createTransaction(new Transaction('addr2', 'addr1', 50));
+const tx1 = new Transaction(myWalletAddress, 'Public key here', 10);
+tx1.signTransaction(myKey);
+toxyCoin.addTransaction(tx1);
+
+
 
 console.log('\n Starting the miner...');
-toxyCoin.minePendingTransactions('Anthrax-addr');
+toxyCoin.minePendingTransactions(myWalletAddress);
 
-console.log('Balance of Anthrax is ', toxyCoin.getAddressBalance('Anthrax-addr'));
-
-console.log('\n Starting the miner...');
-toxyCoin.minePendingTransactions('Anthrax-addr');
-
-console.log('Balance of Anthrax is ', toxyCoin.getAddressBalance('Anthrax-addr'));
+console.log('Balance of Anthrax is ', toxyCoin.getAddressBalance(myWalletAddress));
 
 console.log('\n Starting the miner...');
-toxyCoin.minePendingTransactions('Anthrax-addr');
+toxyCoin.minePendingTransactions(myWalletAddress);
 
-console.log('Balance of Anthrax is ', toxyCoin.getAddressBalance('Anthrax-addr'));
-
-console.log('\n Starting the miner...');
-toxyCoin.minePendingTransactions('Anthrax-addr');
-
-console.log('Balance of Anthrax is ', toxyCoin.getAddressBalance('Anthrax-addr'));
+console.log('Balance of Anthrax is ', toxyCoin.getAddressBalance(myWalletAddress));

@@ -1,5 +1,6 @@
 const SHA256 = require('crypto-js/sha256')
-
+const EC = require('elliptic').ec;
+const ec = new EC('secp256k1');
 class Transaction{
   constructor(fromAddress, toAddress, amount){
     this.fromAddress = fromAddress;
@@ -16,7 +17,7 @@ class Transaction{
       throw new Error("You can't sign transactions for other wallets!")
     }
 
-    const hashTX = this.calculateHash();
+    const hashTx = this.calculateHash();
     const sig = signingKey.sign(hashTx, 'base64');
     this.signature = sig.toDER('hex');
 
@@ -24,6 +25,13 @@ class Transaction{
 
   isValid(){
     if (this.fromAddress === null) return true;
+
+    if (!this.signature || this.signature.length === 0) {
+      throw new Error('Transaction not signed.')
+    }
+
+    const publicKey = ec.keyFromPublic(this.fromAddress, 'hex');
+    return publicKey.verify(this.calculateHash(), this.signature);
   }
 }
 
@@ -34,6 +42,7 @@ class Block{
         this.previousHash = previousHash;
         this.hash = this.calculateHash();
         this.nonce = 0;
+
     }
 
     calculateHash(){
@@ -48,6 +57,14 @@ class Block{
 
       console.log("Block mined: "+this.hash);
     }
+
+    hasValidTransactions(){
+      for(const tx of this.transactions){
+        if(!tx.isValid()){
+          return false;
+        }
+      }
+    }
 }
 
 
@@ -56,7 +73,7 @@ class BlockChain{
         this.chain = [this.createGenesisBlock()];
         this.difficulty = 2;
         this.pendingTransactions = [];
-        this.mReward = 100;
+        this.mReward = 300;
     }
 
     createGenesisBlock(){
@@ -79,8 +96,19 @@ class BlockChain{
       ];
     }
 
-    createTransaction(transaction){
+    addTransaction(transaction){
+
+      if(!transaction.fromAddress || !transaction.toAddress){
+          throw new Error('Transactio must have from and to addresses!');
+      }
+
+      if(!transaction.isValid()){
+        throw new Error('Cannot ass invalid transaction to the chain!');
+      }
+
       this.pendingTransactions.push(transaction);
+
+
     }
 
     getAddressBalance(address){
@@ -104,6 +132,10 @@ class BlockChain{
         for (let i = 1; i < this.chain.length; i++) {
             const currentBlock = this.chain[i];
             const previousBlock = this.chain[i - 1];
+
+            if (!currentBlock.hasValidTransactions()) {
+              return false;
+            }
 
             if (currentBlock.hash !== currentBlock.calculateHash()) {
                 return false;
